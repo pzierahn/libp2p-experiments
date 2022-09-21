@@ -93,7 +93,8 @@ func main() {
 
 	go func() {
 		for addr := range not.PeerChan {
-			log.Printf("Discover: addr=%v", addr)
+			jb, _ := json.MarshalIndent(addr, "", "  ")
+			log.Printf("Discover: addr=%s", jb)
 		}
 	}()
 
