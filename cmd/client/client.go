@@ -5,12 +5,22 @@ import (
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/peerstore"
+	"github.com/libp2p/go-libp2p/p2p/discovery/mdns"
 	"github.com/multiformats/go-multiaddr"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	"p2p/adapter"
+	"time"
 )
+
+type discoveryNotifee struct {
+	PeerChan chan peer.AddrInfo
+}
+
+func (n *discoveryNotifee) HandlePeerFound(pi peer.AddrInfo) {
+	n.PeerChan <- pi
+}
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
@@ -33,6 +43,20 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+
+	not := &discoveryNotifee{
+		PeerChan: make(chan peer.AddrInfo),
+	}
+	ser := mdns.NewMdnsService(client, "xxx-meet", not)
+	if err := ser.Start(); err != nil {
+		log.Fatalln(err)
+	}
+
+	go func() {
+		for addr := range not.PeerChan {
+			log.Printf("Discover: addr=%v", addr)
+		}
+	}()
 
 	// We have a peer ID and a targetAddr, so we add it to the peerstore
 	// so LibP2P knows how to contact it
@@ -64,17 +88,7 @@ func main() {
 	//
 	//log.Printf("read reply: %q\n", out)
 
-	if err := conn.Close(); err != nil {
-		log.Fatalln(err)
-	}
-
-	if err := stream.Conn().Close(); err != nil {
-		log.Fatalln(err)
-	}
-
-	if err := stream.Close(); err != nil {
-		log.Fatalln(err)
-	}
+	time.Sleep(time.Second * 3)
 
 	log.Println("done")
 }

@@ -7,13 +7,22 @@ import (
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/network"
-	"github.com/libp2p/go-libp2p/p2p/protocol/circuitv1/relay"
+	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/libp2p/go-libp2p/p2p/discovery/mdns"
 	"github.com/multiformats/go-multiaddr"
 	"google.golang.org/grpc"
 	"log"
 	"os"
 	"p2p/adapter"
 )
+
+type discoveryNotifee struct {
+	PeerChan chan peer.AddrInfo
+}
+
+func (n *discoveryNotifee) HandlePeerFound(pi peer.AddrInfo) {
+	n.PeerChan <- pi
+}
 
 type Key struct {
 	PrivKey []byte
@@ -65,20 +74,28 @@ func main() {
 
 	host1, err := libp2p.New(
 		libp2p.Identity(key.Private()),
-		//libp2p.ListenAddrStrings(
-		//	"/ip4/127.0.0.1/tcp/9000",
-		//),
+		libp2p.ListenAddrStrings(
+			"/ip4/127.0.0.1/tcp/9000",
+		),
 		libp2p.EnableRelay(),
 	)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	_, err = relay.NewRelay(host1)
-	if err != nil {
-		log.Printf("Failed to instantiate h2 relay: %v", err)
-		return
+	not := &discoveryNotifee{
+		PeerChan: make(chan peer.AddrInfo),
 	}
+	ser := mdns.NewMdnsService(host1, "xxx-meet", not)
+	if err := ser.Start(); err != nil {
+		log.Fatalln(err)
+	}
+
+	go func() {
+		for addr := range not.PeerChan {
+			log.Printf("Discover: addr=%v", addr)
+		}
+	}()
 
 	for _, addr := range host1.Addrs() {
 		// Build host multiaddress
