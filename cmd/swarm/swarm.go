@@ -13,11 +13,9 @@ import (
 )
 
 var (
-	connect  = flag.String("connect", "", "connect to multipart address")
-	relayS   = flag.Bool("relay", false, "enable relay")
-	provider = flag.Bool("provider", false, "enable provider")
-	consumer = flag.Bool("consumer", false, "enable consumer")
-	port     = flag.Int("port", 0, "enable consumer")
+	connect = flag.String("connect", "", "connect to multipart address")
+	relayS  = flag.Bool("relay", false, "enable relay")
+	port    = flag.Int("port", 0, "enable consumer")
 )
 
 func init() {
@@ -54,34 +52,23 @@ func main() {
 
 	ctx := context.Background()
 
-	maddr, err := multiaddr.NewMultiaddr(*connect)
-	if err != nil {
-		log.Fatalln(err)
-	}
+	if *connect != "" {
+		maddr, err := multiaddr.NewMultiaddr(*connect)
+		if err != nil {
+			log.Fatalln(err)
+		}
 
-	info, err := peer.AddrInfoFromP2pAddr(maddr)
-	if err != nil {
-		log.Fatalln(err)
-	}
+		info, err := peer.AddrInfoFromP2pAddr(maddr)
+		if err != nil {
+			log.Fatalln(err)
+		}
 
-	log.Printf("connect to %+v", info)
+		log.Printf("connect to %+v", info)
 
-	err = host.Connect(ctx, *info)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	if *provider {
-		host.SetStreamHandler("test", func(stream network.Stream) {
-			log.Printf("test: recieved stream %v", stream.ID())
-			_, err = stream.Write([]byte("Hello from " + host.ID().String()))
-			if err != nil {
-				log.Fatalf("Failed to write stream %v: %v", stream.ID(), err)
-			}
-		})
-	}
-
-	if *consumer {
+		err = host.Connect(ctx, *info)
+		if err != nil {
+			log.Fatalln(err)
+		}
 
 		stream, err := host.NewStream(ctx, info.ID)
 		buf := make([]byte, 1024)
@@ -91,7 +78,14 @@ func main() {
 		}
 
 		log.Printf("message=%s", buf)
-
+	} else {
+		host.SetStreamHandler("test", func(stream network.Stream) {
+			log.Printf("test: recieved stream %v", stream.ID())
+			_, err = stream.Write([]byte("Hello from " + host.ID().String()))
+			if err != nil {
+				log.Fatalf("Failed to write stream %v: %v", stream.ID(), err)
+			}
+		})
 	}
 
 	for _, addr := range host.Addrs() {
