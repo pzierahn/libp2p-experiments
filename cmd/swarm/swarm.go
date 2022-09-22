@@ -42,7 +42,8 @@ func main() {
 	}
 
 	for _, addr := range host.Addrs() {
-		log.Printf("%v", addr)
+		hostAddr, _ := multiaddr.NewMultiaddr(fmt.Sprintf("/p2p/%s", host.ID()))
+		log.Printf("hostAddr=%v", addr.Encapsulate(hostAddr).String())
 	}
 
 	ctx := context.Background()
