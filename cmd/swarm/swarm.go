@@ -29,10 +29,10 @@ func main() {
 
 	if *port > 0 {
 		opts = append(opts, libp2p.ListenAddrStrings(
-			fmt.Sprintf("/ip4/127.0.0.1/tcp/%d", port),
-			fmt.Sprintf("/ip4/127.0.0.1/udp/%d/quic", port),
-			fmt.Sprintf("/ip6/127.0.0.1/tcp/%d", port),
-			fmt.Sprintf("/ip6/127.0.0.1/udp/%d/quic", port),
+			fmt.Sprintf("/ip4/127.0.0.1/tcp/%d", *port),
+			fmt.Sprintf("/ip4/127.0.0.1/udp/%d/quic", *port),
+			fmt.Sprintf("/ip6/127.0.0.1/tcp/%d", *port),
+			fmt.Sprintf("/ip6/127.0.0.1/udp/%d/quic", *port),
 		))
 	}
 
