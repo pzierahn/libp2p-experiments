@@ -7,22 +7,14 @@ import (
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/network"
-	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/p2p/discovery/mdns"
 	"github.com/multiformats/go-multiaddr"
 	"google.golang.org/grpc"
 	"log"
 	"os"
 	"p2p/adapter"
+	"p2p/discov"
 )
-
-type discoveryNotifee struct {
-	PeerChan chan peer.AddrInfo
-}
-
-func (n *discoveryNotifee) HandlePeerFound(pi peer.AddrInfo) {
-	n.PeerChan <- pi
-}
 
 type Key struct {
 	PrivKey []byte
@@ -83,16 +75,14 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	not := &discoveryNotifee{
-		PeerChan: make(chan peer.AddrInfo),
-	}
-	ser := mdns.NewMdnsService(host1, "xxx-meet", not)
+	noti := discov.New()
+	ser := mdns.NewMdnsService(host1, "xxx-meet", noti)
 	if err := ser.Start(); err != nil {
 		log.Fatalln(err)
 	}
 
 	go func() {
-		for addr := range not.PeerChan {
+		for addr := range noti.PeerChan {
 			jb, _ := json.MarshalIndent(addr, "", "  ")
 			log.Printf("Discover: addr=%s", jb)
 		}

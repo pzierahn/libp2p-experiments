@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/peerstore"
@@ -11,16 +12,9 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	"p2p/adapter"
+	"p2p/discov"
 	"time"
 )
-
-type discoveryNotifee struct {
-	PeerChan chan peer.AddrInfo
-}
-
-func (n *discoveryNotifee) HandlePeerFound(pi peer.AddrInfo) {
-	n.PeerChan <- pi
-}
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
@@ -44,17 +38,16 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	not := &discoveryNotifee{
-		PeerChan: make(chan peer.AddrInfo),
-	}
-	ser := mdns.NewMdnsService(client, "xxx-meet", not)
+	noti := discov.New()
+	ser := mdns.NewMdnsService(client, "xxx-meet", noti)
 	if err := ser.Start(); err != nil {
 		log.Fatalln(err)
 	}
 
 	go func() {
-		for addr := range not.PeerChan {
-			log.Printf("Discover: addr=%v", addr)
+		for addr := range noti.PeerChan {
+			jb, _ := json.MarshalIndent(addr, "", "  ")
+			log.Printf("Discover: addr=%s", jb)
 		}
 	}()
 
