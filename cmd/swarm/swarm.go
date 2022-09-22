@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -12,9 +13,10 @@ import (
 )
 
 var (
-	connect  = flag.String("a", "", "multipart address")
-	provider = flag.Bool("p", false, "enable provider")
-	consumer = flag.Bool("c", false, "enable consumer")
+	connect  = flag.String("connect", "", "connect to multipart address")
+	provider = flag.Bool("provider", false, "enable provider")
+	consumer = flag.Bool("consumer", false, "enable consumer")
+	port     = flag.Int("port", 0, "enable consumer")
 )
 
 func init() {
@@ -22,12 +24,26 @@ func init() {
 }
 
 func main() {
+
+	var opts []libp2p.Option
+
+	if *port > 0 {
+		opts = append(opts, libp2p.ListenAddrStrings(
+			fmt.Sprintf("/ip4/127.0.0.1/tcp/%d", port),
+			fmt.Sprintf("/ip4/127.0.0.1/udp/%d/quic", port),
+			fmt.Sprintf("/ip6/127.0.0.1/tcp/%d", port),
+			fmt.Sprintf("/ip6/127.0.0.1/udp/%d/quic", port),
+		))
+	}
+
 	host, err := libp2p.New()
 	if err != nil {
 		log.Fatalf("Failed to create h1: %v", err)
 	}
 
-	log.Printf("%v", host.ID())
+	for _, addr := range host.Addrs() {
+		log.Printf("%v", addr)
+	}
 
 	ctx := context.Background()
 
