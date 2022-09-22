@@ -29,6 +29,10 @@ func main() {
 
 	opts := []libp2p.Option{
 		libp2p.EnableRelay(),
+		libp2p.EnableAutoRelay(),
+		libp2p.EnableHolePunching(),
+		libp2p.EnableNATService(),
+		libp2p.EnableRelayService(),
 	}
 
 	if *port > 0 {
