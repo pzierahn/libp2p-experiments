@@ -33,6 +33,7 @@ func main() {
 		libp2p.EnableHolePunching(),
 		libp2p.EnableNATService(),
 		libp2p.EnableRelayService(),
+		libp2p.NATPortMap(),
 	}
 
 	if *port > 0 {
@@ -100,9 +101,10 @@ func main() {
 		})
 	}
 
+	log.Println("I can be reached at:")
 	for _, addr := range host.Addrs() {
 		hostAddr, _ := multiaddr.NewMultiaddr(fmt.Sprintf("/p2p/%s", host.ID()))
-		log.Printf("hostAddr=%v", addr.Encapsulate(hostAddr).String())
+		log.Println(addr.Encapsulate(hostAddr))
 	}
 
 	<-ctx.Done()
