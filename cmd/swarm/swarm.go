@@ -12,9 +12,9 @@ import (
 )
 
 var (
-	connect  = flag.String("c", "", "multipart address")
+	connect  = flag.String("a", "", "multipart address")
 	provider = flag.Bool("p", false, "enable provider")
-	consumer = flag.Bool("c", false, "enable provider")
+	consumer = flag.Bool("c", false, "enable consumer")
 )
 
 func init() {
