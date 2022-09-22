@@ -22,7 +22,7 @@ func New() *DiscoveryNotifee {
 	}
 }
 
-func AddHost(ho host.Host, serviceName string) {
+func AddHost(ho host.Host, serviceName string, callbacks ...func(addr peer.AddrInfo)) {
 	noti := &DiscoveryNotifee{
 		PeerChan: make(chan peer.AddrInfo),
 	}
@@ -35,6 +35,10 @@ func AddHost(ho host.Host, serviceName string) {
 		for addr := range noti.PeerChan {
 			jb, _ := json.MarshalIndent(addr, "", "  ")
 			log.Printf("Discover: hostID=%v addr=%s", ho.ID(), jb)
+
+			for _, callback := range callbacks {
+				callback(addr)
+			}
 		}
 	}()
 }
