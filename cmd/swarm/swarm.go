@@ -36,7 +36,7 @@ func main() {
 		))
 	}
 
-	host, err := libp2p.New()
+	host, err := libp2p.New(opts...)
 	if err != nil {
 		log.Fatalf("Failed to create h1: %v", err)
 	}
