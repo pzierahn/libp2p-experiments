@@ -7,12 +7,14 @@ import (
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/libp2p/go-libp2p/core/protocol"
 	"github.com/libp2p/go-libp2p/p2p/protocol/circuitv2/relay"
 	"github.com/multiformats/go-multiaddr"
 	"log"
 )
 
 var (
+	pid     = protocol.ID("hello/1.0.0")
 	connect = flag.String("connect", "", "connect to multipart address")
 	relayS  = flag.Bool("relay", false, "enable relay")
 	port    = flag.Int("port", 0, "enable consumer")
@@ -70,7 +72,7 @@ func main() {
 			log.Fatalln(err)
 		}
 
-		stream, err := host.NewStream(ctx, info.ID)
+		stream, err := host.NewStream(ctx, info.ID, pid)
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -83,7 +85,9 @@ func main() {
 
 		log.Printf("message=%s", buf)
 	} else {
-		host.SetStreamHandler("test", func(stream network.Stream) {
+		log.Printf("listen for %s streams...", pid)
+
+		host.SetStreamHandler(pid, func(stream network.Stream) {
 			log.Printf("test: recieved stream %v", stream.ID())
 			_, err = stream.Write([]byte("Hello from " + host.ID().String()))
 			if err != nil {
