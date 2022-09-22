@@ -71,6 +71,10 @@ func main() {
 		}
 
 		stream, err := host.NewStream(ctx, info.ID)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
 		buf := make([]byte, 1024)
 		_, err = stream.Read(buf)
 		if err != nil {
