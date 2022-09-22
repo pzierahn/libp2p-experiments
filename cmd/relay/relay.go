@@ -13,8 +13,6 @@ import (
 	"time"
 
 	"github.com/libp2p/go-libp2p"
-	relayv1 "github.com/libp2p/go-libp2p/p2p/protocol/circuitv1/relay"
-
 	ma "github.com/multiformats/go-multiaddr"
 )
 
@@ -33,6 +31,25 @@ func discoverService(name string, ho host.Host) {
 	}()
 }
 
+func createAndConnect(h1 host.Host) {
+	edge, err := libp2p.New(libp2p.EnableRelay())
+	if err != nil {
+		log.Fatalf("Failed to create h1: %v", err)
+	}
+
+	log.Printf("edge:      %v", edge.ID())
+
+	discoverService("edge", edge)
+
+	err = h1.Connect(context.Background(), peer.AddrInfo{
+		ID:    edge.ID(),
+		Addrs: edge.Addrs(),
+	})
+	if err != nil {
+		log.Fatalln(err)
+	}
+}
+
 func main() {
 	// Create three libp2p hosts, enable relay client capabilities on all
 	// of them.
@@ -43,7 +60,10 @@ func main() {
 		log.Printf("Failed to create h1: %v", err)
 		return
 	}
-	discoverService("h1", h1)
+	log.Printf("h1:        %v", h1.ID())
+
+	//discoverService("h1", h1)
+	createAndConnect(h1)
 
 	// Tell the host to relay connections for other peers (The ability to *use*
 	// a relay vs the ability to *be* a relay)
@@ -52,11 +72,14 @@ func main() {
 		log.Printf("Failed to create relayHost: %v", err)
 		return
 	}
-	_, err = relayv1.NewRelay(relayHost)
-	if err != nil {
-		log.Printf("Failed to instantiate relayHost relay: %v", err)
-		return
-	}
+
+	log.Printf("relayHost: %v", relayHost.ID())
+
+	//_, err = relayv1.NewRelay(relayHost)
+	//if err != nil {
+	//	log.Printf("Failed to instantiate relayHost relay: %v", err)
+	//	return
+	//}
 
 	// Zero out the listen addresses for the host, so it can only communicate
 	// via p2p-circuit for our example
@@ -65,6 +88,8 @@ func main() {
 		log.Printf("Failed to create h3: %v", err)
 		return
 	}
+	log.Printf("h3:        %v", h3.ID())
+
 	discoverService("h3", h3)
 
 	h2info := peer.AddrInfo{
@@ -77,10 +102,10 @@ func main() {
 		log.Printf("Failed to connect h1 and relayHost: %v", err)
 		return
 	}
-	if err := h3.Connect(context.Background(), h2info); err != nil {
-		log.Printf("Failed to connect h3 and relayHost: %v", err)
-		return
-	}
+	//if err := h3.Connect(context.Background(), h2info); err != nil {
+	//	log.Printf("Failed to connect h3 and relayHost: %v", err)
+	//	return
+	//}
 
 	// Now, to test things, let's set up a protocol handler on h3
 	h3.SetStreamHandler("/cats", func(s network.Stream) {
